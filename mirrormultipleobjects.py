@@ -2,7 +2,7 @@ bl_info = {
     "name": "Mirror Multiple Objects",
     "blender": (2, 80, 0),
     "category": "Object",
-    "version": (1, 3, 1),
+    "version": (1, 4, 1),
     "author": "kreby",
     "description": "mirrors all selected objects over active object",
 }
@@ -43,9 +43,9 @@ class MirrorObjectsOperator(bpy.types.Operator):
         pref = "MirrorMult" # name preference
         
         params = (
-            context.scene.mirrorX,
-            context.scene.mirrorY,
-            context.scene.mirrorZ,
+            scene.mirrorX,
+            scene.mirrorY,
+            scene.mirrorZ,
         )
         
         (mirrorX, mirrorY, mirrorZ) = params
@@ -68,6 +68,33 @@ class MirrorObjectsOperator(bpy.types.Operator):
         
         return {'FINISHED'}
 
+class RotationalSymmetryOperator(bpy.types.Operator):
+    bl_idname = "object.rotate_sym"
+    bl_label = "Rotationally Symmetrize"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    symm_obj_options = [
+        ('OP1', '3D Cursor', ''),
+        ('OP2', 'Active Object', '')
+    ]
+
+    symm_obj = bpy.props.EnumProperty(
+        name="Rot. Obj.",
+        default=0,
+        items=symm_obj_options
+    )
+
+    def invoke(self, context, event):
+        wm = context.window_manager
+        return wm.invoke_props_dialog(self)
+
+    def draw(self, context):
+        self.layout.prop(self, 'symm_obj_options')
+
+    def execute(self, context):
+
+        return {'FINISHED'}
+
 # ~~ PANEL
 
 class MirrorObjectsPanel(bpy.types.Panel):
@@ -87,13 +114,29 @@ class MirrorObjectsPanel(bpy.types.Panel):
         row.operator(MirrorObjectsOperator.bl_idname, text='Mirror Selected Objects')
 
         row = self.layout.row(align=False) 
-        row.operator('object.remove_mirror_mult', text='Unmirror Selected Objects')
+        row.operator(RemoveMirrorMult.bl_idname, text='Unmirror Selected Objects')
+
+class RotateSymmPanel(bpy.types.Panel):
+    bl_category = 'kreby'
+    bl_idname = 'VIEW3D_PT_rotate_symmetry'
+    bl_label = 'Rotationally Symmetrize'
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+        layout.prop(RotationalSymmetryOperator.bl_idname, "symm_obj", name=RotationalSymmetryOperator.symm_obj.name)
+
+
+        
 
 # ~~ ROUTINE
 CLASSES = [
     RemoveMirrorMult,
     MirrorObjectsOperator,
     MirrorObjectsPanel,
+    RotationalSymmetryOperator
 ]
 
 def register():
