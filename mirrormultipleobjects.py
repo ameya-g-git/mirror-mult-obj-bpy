@@ -21,7 +21,7 @@ class MyProperties(bpy.types.PropertyGroup):
             ('OP2', 'Active Obj. Origin', '', 1)
     ]
 
-    symm_obj : bpy.props.EnumProperty(
+    symm_obj : bpy.props.EnumProperty(  # holds the point at which the objects will be rotated around, either 3d cursor or obj's origin
         name="Rotation Origin",
         description="s",
         default=0,
@@ -34,9 +34,7 @@ class RemoveMirrorMult(bpy.types.Operator):
     bl_label = "Unmirror Selected Objects"
     bl_options = {'REGISTER', 'UNDO'}
 
-    def execute(self, context):
-        scene = context.scene
-        
+    def execute(self, context):        
         selected = context.selected_objects
 
         for obj in selected:
@@ -61,20 +59,15 @@ class MirrorObjectsOperator(bpy.types.Operator):
             scene.mirrorZ,
         )
         
-        (mirrorX, mirrorY, mirrorZ) = params
-        
-        axes_used = (mirrorX, mirrorY, mirrorZ)
-        
-        
         target_obj = context.active_object    # makes the active object the "target"
         tool_objs = [o for o in context.selected_objects if o != target_obj]    # makes every other object applicable to the mirror
 
         for obj in tool_objs:
-            mirMult = obj.modifiers.new(pref, type='MIRROR')    # creates a mirror modifier with an appropriate name
+            obj.modifiers.new(pref, type='MIRROR')    # creates a mirror modifier with an appropriate name
             
             #try obj.modif
             obj.modifiers[len(obj.modifiers)-1].mirror_object = target_obj  # sets the mirror object to the active object
-            obj.modifiers[len(obj.modifiers)-1].use_axis = axes_used  # sets the mirror object to the active object
+            obj.modifiers[len(obj.modifiers)-1].use_axis = params  # sets appropriate mirror axes
             
             
         # the code to mirror multiple objects
@@ -106,10 +99,10 @@ class MirrorObjectsPanel(bpy.types.Panel):
             row.prop(context.scene, prop_name)
             
         row = self.layout.row(align=False) 
-        row.operator(MirrorObjectsOperator.bl_idname, text='Mirror Selected Objects')
+        row.operator(MirrorObjectsOperator.bl_idname, text=MirrorObjectsOperator.bl_label)
 
         row = self.layout.row(align=False) 
-        row.operator(RemoveMirrorMult.bl_idname, text='Unmirror Selected Objects')
+        row.operator(RemoveMirrorMult.bl_idname, text=RemoveMirrorMult.bl_label)
 
 class RotateSymmPanel(bpy.types.Panel):
     bl_category = 'kreby'
@@ -121,16 +114,12 @@ class RotateSymmPanel(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         scene = context.scene
-        mytool = scene.my_tool
+        mytool = scene.my_tool # allows for reference of MyProperties
 
         layout.prop(mytool, "symm_obj")
-        #row.prop(symm_obj, name=RotationalSymmetryOperator.symm_obj.name)
-
-
-        
 
 # ~~ ROUTINE
-CLASSES = [
+CLASSES = [ # all classes that are used within the operators and panels
     MyProperties,
     RemoveMirrorMult,
     MirrorObjectsOperator,
@@ -146,7 +135,7 @@ def register():
     for klass in CLASSES:
         bpy.utils.register_class(klass)
 
-        bpy.types.Scene.my_tool = bpy.props.PointerProperty(type=MyProperties)
+        bpy.types.Scene.my_tool = bpy.props.PointerProperty(type=MyProperties) # creates my_tool (the property group reference) in each class being registered
 
 def unregister():
     for (prop_name, _) in MyProperties.PROPS:
@@ -155,7 +144,7 @@ def unregister():
     for klass in CLASSES:
         bpy.utils.unregister_class(klass)
 
-        del bpy.types.Scene.my_tool
+        del bpy.types.Scene.my_tool # deletes the reference
         
 
 if __name__ == '__main__':
