@@ -9,11 +9,23 @@ bl_info = {
 
 import bpy
 
-PROPS = [
-    ('mirrorX', bpy.props.BoolProperty(name='X', default=False)),
-    ('mirrorY', bpy.props.BoolProperty(name='Y', default=False)),
-    ('mirrorZ', bpy.props.BoolProperty(name='Z', default=False)),
-]
+class MyProperties(bpy.types.PropertyGroup):
+    PROPS = [
+        ('mirrorX', bpy.props.BoolProperty(name='X', default=False)),
+        ('mirrorY', bpy.props.BoolProperty(name='Y', default=False)),
+        ('mirrorZ', bpy.props.BoolProperty(name='Z', default=False)),
+    ]
+
+    symm_obj_options = [
+            ('OP1', '3D Cursor', '', 0),
+            ('OP2', 'Active Object', '', 1)
+    ]
+
+    symm_obj = bpy.props.EnumProperty(
+        name="Rot. Obj.",
+        default=0,
+        items=symm_obj_options
+    )
 
 # ~~ OPERATORs
 class RemoveMirrorMult(bpy.types.Operator):
@@ -73,24 +85,6 @@ class RotationalSymmetryOperator(bpy.types.Operator):
     bl_label = "Rotationally Symmetrize"
     bl_options = {'REGISTER', 'UNDO'}
 
-    symm_obj_options = [
-        ('OP1', '3D Cursor', ''),
-        ('OP2', 'Active Object', '')
-    ]
-
-    symm_obj = bpy.props.EnumProperty(
-        name="Rot. Obj.",
-        default=0,
-        items=symm_obj_options
-    )
-
-    def invoke(self, context, event):
-        wm = context.window_manager
-        return wm.invoke_props_dialog(self)
-
-    def draw(self, context):
-        self.layout.prop(self, 'symm_obj_options')
-
     def execute(self, context):
 
         return {'FINISHED'}
@@ -107,7 +101,7 @@ class MirrorObjectsPanel(bpy.types.Panel):
     def draw(self, context):
         self.layout.label(text='Mirror Axes')
         row = self.layout.row(align=True)
-        for (prop_name, _) in PROPS:
+        for (prop_name, _) in MyProperties.PROPS:
             row.prop(context.scene, prop_name)
             
         row = self.layout.row(align=False) 
@@ -126,13 +120,17 @@ class RotateSymmPanel(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         scene = context.scene
-        layout.prop(RotationalSymmetryOperator.bl_idname, "symm_obj", name=RotationalSymmetryOperator.symm_obj.name)
+        mytool = scene.my_tool
+
+        layout.row.prop(mytool, "symm_obj")
+        #row.prop(symm_obj, name=RotationalSymmetryOperator.symm_obj.name)
 
 
         
 
 # ~~ ROUTINE
 CLASSES = [
+    MyProperties,
     RemoveMirrorMult,
     MirrorObjectsOperator,
     MirrorObjectsPanel,
@@ -140,18 +138,22 @@ CLASSES = [
 ]
 
 def register():
-    for (prop_name, prop_value) in PROPS:
+    for (prop_name, prop_value) in MyProperties.PROPS:
         setattr(bpy.types.Scene, prop_name, prop_value)
     
     for klass in CLASSES:
         bpy.utils.register_class(klass)
 
+        bpy.types.Scene.my_tool = bpy.props.PointerProperty(type=MyProperties)
+
 def unregister():
-    for (prop_name, _) in PROPS:
+    for (prop_name, _) in MyProperties.PROPS:
         delattr(bpy.types.Scene, prop_name)
 
     for klass in CLASSES:
         bpy.utils.unregister_class(klass)
+
+        del bpy.types.Scene.my_tool
         
 
 if __name__ == '__main__':
