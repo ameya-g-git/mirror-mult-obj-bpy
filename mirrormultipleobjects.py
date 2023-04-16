@@ -18,11 +18,12 @@ class MyProperties(bpy.types.PropertyGroup):
 
     symm_obj_options = [
             ('OP1', '3D Cursor', '', 0),
-            ('OP2', 'Active Object', '', 1)
+            ('OP2', 'Active Obj. Origin', '', 1)
     ]
 
-    symm_obj = bpy.props.EnumProperty(
-        name="Rot. Obj.",
+    symm_obj : bpy.props.EnumProperty(
+        name="Rotation Origin",
+        description="s",
         default=0,
         items=symm_obj_options
     )
@@ -113,7 +114,7 @@ class MirrorObjectsPanel(bpy.types.Panel):
 class RotateSymmPanel(bpy.types.Panel):
     bl_category = 'kreby'
     bl_idname = 'VIEW3D_PT_rotate_symmetry'
-    bl_label = 'Rotationally Symmetrize'
+    bl_label = 'Rotational Symmetry'
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
 
@@ -122,7 +123,7 @@ class RotateSymmPanel(bpy.types.Panel):
         scene = context.scene
         mytool = scene.my_tool
 
-        layout.row.prop(mytool, "symm_obj")
+        layout.prop(mytool, "symm_obj")
         #row.prop(symm_obj, name=RotationalSymmetryOperator.symm_obj.name)
 
 
@@ -134,7 +135,8 @@ CLASSES = [
     RemoveMirrorMult,
     MirrorObjectsOperator,
     MirrorObjectsPanel,
-    RotationalSymmetryOperator
+    RotationalSymmetryOperator,
+    RotateSymmPanel
 ]
 
 def register():
