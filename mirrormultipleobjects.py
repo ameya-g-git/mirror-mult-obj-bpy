@@ -21,7 +21,7 @@ class MyProperties(bpy.types.PropertyGroup):
             ('OP2', 'Active Obj. Origin', '', 1)
     ]
 
-    num_copies = bpy.props.IntProperty(
+    num_copies : bpy.props.IntProperty(
         name="Num. of Copies", 
         description="how many copies", 
         default=2, 
