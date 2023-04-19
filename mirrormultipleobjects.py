@@ -21,11 +21,21 @@ class MyProperties(bpy.types.PropertyGroup):
             ('OP2', 'Active Obj. Origin', '', 1)
     ]
 
+    num_copies = bpy.props.IntProperty(
+        name="Num. of Copies", 
+        description="how many copies", 
+        default=2, 
+        min=2,
+        max=360,
+        step=1, 
+        )
+
     symm_obj : bpy.props.EnumProperty(  # holds the point at which the objects will be rotated around, either 3d cursor or obj's origin
         name="Rotation Origin",
-        description="s",
+        description="what to rotate around",
         default=0,
-        items=symm_obj_options
+        items=symm_obj_options, # ~ MAKE FLAG VERSION ~
+
     )
 
 # ~~ OPERATORs
@@ -80,7 +90,17 @@ class RotationalSymmetryOperator(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
+        
+        # save old 3d cursor location
 
+        if MyProperties.symm_obj == 'OP2':
+            # move 3d cursor to active object origin
+            print() ## dummy code to remove error, **DELETE LATER**
+
+        # add empty
+
+        # move 3d cursor back (since people might want it to stay in the same place)
+    
         return {'FINISHED'}
 
 # ~~ PANEL
@@ -116,6 +136,7 @@ class RotateSymmPanel(bpy.types.Panel):
         scene = context.scene
         mytool = scene.my_tool # allows for reference of MyProperties
 
+        layout.prop(mytool, "num_copies")
         layout.prop(mytool, "symm_obj")
 
 # ~~ ROUTINE
@@ -129,13 +150,13 @@ CLASSES = [ # all classes that are used within the operators and panels
 ]
 
 def register():
-    for (prop_name, prop_value) in MyProperties.PROPS:
-        setattr(bpy.types.Scene, prop_name, prop_value)
-    
     for klass in CLASSES:
         bpy.utils.register_class(klass)
 
         bpy.types.Scene.my_tool = bpy.props.PointerProperty(type=MyProperties) # creates my_tool (the property group reference) in each class being registered
+
+    for (prop_name, prop_value) in MyProperties.PROPS:
+        setattr(bpy.types.Scene, prop_name, prop_value)
 
 def unregister():
     for (prop_name, _) in MyProperties.PROPS:
