@@ -93,23 +93,26 @@ class RotationalSymmetryOperator(bpy.types.Operator):
         mytool = scene.my_tool
         
         num_items = mytool.num_copies
+        
+        cursor_loc = scene.cursor.location
 
         if mytool.symm_obj == 'OP1':
             tool_objs = context.selected_objects
         if mytool.symm_obj == 'OP2':
+            cursor_loc = scene.cursor.location # holds the past location of the cursor
             target_obj = context.active_object
             tool_objs = [o for o in context.selected_objects if o != target_obj]
 
             scene.cursor.location = target_obj.location
-
-        cursor_loc = scene.cursor.location # holds the location of the cursor so all obj's origins can be moved easily
+        
+        cursor_loc_temp = scene.cursor.location
 
         for obj in tool_objs:
-            # set origin to mirror location
-            print()  # ~ DUMMY CODE, REMOVE LATER
+            bpy.ops.object.origin_set(type='ORIGIN_CURSOR')
+
         # add empty
 
-        # move 3d cursor back (since people might want it to stay in the same place)
+        scene.cursor.location = cursor_loc
     
         return {'FINISHED'}
 
