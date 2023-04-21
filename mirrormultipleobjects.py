@@ -28,7 +28,7 @@ class MyProperties(bpy.types.PropertyGroup):
         min=2,
         max=360,
         step=1, 
-        )
+    )
 
     symm_obj : bpy.props.EnumProperty(  # holds the point at which the objects will be rotated around, either 3d cursor or obj's origin
         name="Rotation Origin",
@@ -101,14 +101,20 @@ class RotationalSymmetryOperator(bpy.types.Operator):
         if mytool.symm_obj == 'OP2':
             cursor_loc = scene.cursor.location # holds the past location of the cursor
             target_obj = context.active_object
+            
+            empty_dims = target_obj.dimensions # used to calculate the largest dimension so that the empty object used to mirror is easily visible
+            empty_dims_list = [empty_dims.x, empty_dims.y, empty_dims.z]
+            empty_radius = max(empty_dims_list)
+
             tool_objs = [o for o in context.selected_objects if o != target_obj]
 
             scene.cursor.location = target_obj.location
         
-        cursor_loc_temp = scene.cursor.location
+        bpy.ops.object.empty_add(type='PLAIN_AXES', location=scene.cursor.location, radius=(empty_radius*1.1))
 
         for obj in tool_objs:
             bpy.ops.object.origin_set(type='ORIGIN_CURSOR')
+            
 
         # add empty
 
