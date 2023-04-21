@@ -35,7 +35,6 @@ class MyProperties(bpy.types.PropertyGroup):
         description="what to rotate around",
         default=0,
         items=symm_obj_options, # ~ MAKE FLAG VERSION ~
-
     )
 
 # ~~ OPERATORs
@@ -90,13 +89,24 @@ class RotationalSymmetryOperator(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
+        scene = context.scene
+        mytool = scene.my_tool
         
-        # save old 3d cursor location
+        num_items = mytool.num_copies
 
-        if MyProperties.symm_obj == 'OP2':
-            # move 3d cursor to active object origin
-            print() ## dummy code to remove error, **DELETE LATER**
+        if mytool.symm_obj == 'OP1':
+            tool_objs = context.selected_objects
+        if mytool.symm_obj == 'OP2':
+            target_obj = context.active_object
+            tool_objs = [o for o in context.selected_objects if o != target_obj]
 
+            scene.cursor.location = target_obj.location
+
+        cursor_loc = scene.cursor.location # holds the location of the cursor so all obj's origins can be moved easily
+
+        for obj in tool_objs:
+            # set origin to mirror location
+            print()  # ~ DUMMY CODE, REMOVE LATER
         # add empty
 
         # move 3d cursor back (since people might want it to stay in the same place)
@@ -138,6 +148,8 @@ class RotateSymmPanel(bpy.types.Panel):
 
         layout.prop(mytool, "num_copies")
         layout.prop(mytool, "symm_obj")
+
+        layout.operator(RotationalSymmetryOperator.bl_idname, text=RotationalSymmetryOperator.bl_label)
 
 # ~~ ROUTINE
 CLASSES = [ # all classes that are used within the operators and panels
