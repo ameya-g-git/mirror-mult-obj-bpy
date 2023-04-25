@@ -153,7 +153,7 @@ class RotationalSymmetryOperator(bpy.types.Operator):
 
         for obj in tool_objs:
             bpy.ops.object.origin_set(type='ORIGIN_CURSOR')
-            bpy.data.collections[-1].objects.link(obj)
+            bpy.data.collections[new_collec_name].objects.link(obj)
 
             
         scene.cursor.location = cursor_loc
