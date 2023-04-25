@@ -101,8 +101,11 @@ class RotationalSymmetryOperator(bpy.types.Operator):
         empty_dims = 0
         empty_dims_list = [0, 0, 0]
 
+        rot_origin_name = ''
+
         if mytool.symm_obj == 'OP1':
             tool_objs = context.selected_objects
+            rot_origin_name = 'Cursor'
             
             for obj in tool_objs:
                 empty_dims = obj.dimensions
@@ -112,13 +115,14 @@ class RotationalSymmetryOperator(bpy.types.Operator):
                 empty_dims_list[2] += empty_dims.z
             
             for i in range(3):
-                empty_dims_list[i] /= len(tool_objs)
+                empty_dims_list[i] /= len(tool_objs) # averages out all X, Y, and Z dimensions
 
-            empty_radius = max(empty_dims_list) * 1
+            empty_radius = max(empty_dims_list) * 1.1 # the largest of these dimensions is used to determine the empty's radius
 
         elif mytool.symm_obj == 'OP2':
             cursor_loc = scene.cursor.location # holds the past location of the cursor
             target_obj = context.active_object
+            rot_origin_name = target_obj.name
             
             empty_dims = target_obj.dimensions # used to calculate the largest dimension so that the empty object used to mirror is easily visible
             empty_dims_list = [empty_dims.x, empty_dims.y, empty_dims.z]
@@ -140,11 +144,11 @@ class RotationalSymmetryOperator(bpy.types.Operator):
         rotation_empty.name = 'RotSymEmpty' # renames the empty
         bpy.ops.collection.objects_remove_all() # delinks empty from all existing collections, need to rework to nest collections
 
-        bpy.data.collections.new(collec_pref) # creates a new collection to hold all objects that will be rotationally symmetrized
-        rot_sym_collec_list = [c for c in bpy.data.collections if c.name[:16] == collec_pref] # creates a list of collections that are used for this operation
+        new_collec_name = collec_pref + '.' + rot_origin_name
+        bpy.data.collections.new(new_collec_name) # creates a new collection to hold all objects that will be rotationally symmetrized
         
-        bpy.data.collections[-1].objects.link(rotation_empty)
-        scene.collection.children.link(bpy.data.collections[-1])
+        bpy.data.collections[new_collec_name].objects.link(rotation_empty)
+        scene.collection.children.link(bpy.data.collections[new_collec_name])
 
 
         for obj in tool_objs:
