@@ -10,11 +10,10 @@ bl_info = {
 import bpy
 
 class MyProperties(bpy.types.PropertyGroup):
-    PROPS = [
-        ('mirrorX', bpy.props.BoolProperty(name='X', default=False)),
-        ('mirrorY', bpy.props.BoolProperty(name='Y', default=False)),
-        ('mirrorZ', bpy.props.BoolProperty(name='Z', default=False)),
-    ]
+    
+    mirrorX : bpy.props.BoolProperty(name='X', default=False)
+    mirrorY : bpy.props.BoolProperty(name='Y', default=False)
+    mirrorZ : bpy.props.BoolProperty(name='Z', default=False)
 
     symm_obj_options = [
             ('OP1', '3D Cursor', '', 0),
@@ -60,12 +59,13 @@ class MirrorObjectsOperator(bpy.types.Operator):
 
     def execute(self, context):
         scene = context.scene
+        mytool = scene.my_tool
         pref = "MirrorMult" # name preference
         
         params = (
-            scene.mirrorX,
-            scene.mirrorY,
-            scene.mirrorZ,
+            mytool.mirrorX,
+            mytool.mirrorY,
+            mytool.mirrorZ,
         )
         
         target_obj = context.active_object    # makes the active object the "target"
