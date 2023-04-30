@@ -133,9 +133,9 @@ class RotationalSymmetryOperator(bpy.types.Operator):
 
             tool_objs = [o for o in context.selected_objects if o != target_obj]
 
-            scene.cursor.location = target_obj.location
+            scene.cursor.location = target_obj.location # moves 3d cursor to active object so that the empty can be placed accordingly
         
-        bpy.ops.object.empty_add(type='PLAIN_AXES', location=scene.cursor.location, radius=empty_radius, rotation=) # adds an object to be used for rotational symmetry
+        bpy.ops.object.empty_add(type='PLAIN_AXES', location=scene.cursor.location, radius=empty_radius) # adds an object to be used for rotational symmetry
         rotation_empty = bpy.context.selected_objects[0] # holds the empty as an object for future reference
         rotation_empty.name = 'RotSymEmpty' # renames the empty
         bpy.ops.collection.objects_remove_all() # delinks empty from all existing collections, need to rework to nest collections
@@ -150,11 +150,14 @@ class RotationalSymmetryOperator(bpy.types.Operator):
 
         for obj in tool_objs:
             bpy.ops.object.origin_set(type='ORIGIN_CURSOR')
+            bpy.ops.object.transform_apply(rotation=True)
             bpy.data.collections[new_collec_name].objects.link(obj)
 
             obj.modifiers.new('RotSymmetry', type='ARRAY')
             
             rot_sym_modifier = obj.modifiers[len(obj.modifiers)-1]
+            rot_sym_modifier.offset_object = rotation_empty
+            rot_sym_modifier.count = num_items
 
             obj.parent = rotation_empty
 
