@@ -10,20 +10,11 @@ bl_info = {
 import bpy
 
 class MyProperties(bpy.types.PropertyGroup):
-    
-    mirrorX : bpy.props.BoolProperty(name='X', default=False)
-    mirrorY : bpy.props.BoolProperty(name='Y', default=False)
-    mirrorZ : bpy.props.BoolProperty(name='Z', default=False)
-
-    mirror_axes : bpy.props.EnumProperty(
-        name="Mirror Axes",
-        description="Axes to mirror across",
-        items= [
-            ('OP1', 'X', '', 0),
-            ('OP2', 'Y', '', 1),
-            ('OP3', 'Z', '', 2)
-        ]
-    )
+    PROPS = [
+        ('mirrorX', bpy.props.BoolProperty(name='X', default=False)),
+        ('mirrorY', bpy.props.BoolProperty(name='Y', default=False)),
+        ('mirrorZ', bpy.props.BoolProperty(name='Z', default=False)),
+    ]
 
     symm_obj_options = [
             ('OP1', '3D Cursor', '', 0),
@@ -43,7 +34,7 @@ class MyProperties(bpy.types.PropertyGroup):
         name="Rotation Origin",
         description="what to rotate around",
         default=0,
-        items=symm_obj_options
+        items=symm_obj_options, # ~ MAKE FLAG VERSION ~
     )
 
 # ~~ OPERATORs
@@ -69,13 +60,12 @@ class MirrorObjectsOperator(bpy.types.Operator):
 
     def execute(self, context):
         scene = context.scene
-        mytool = scene.my_tool
         pref = "MirrorMult" # name preference
         
         params = (
-            mytool.mirrorX,
-            mytool.mirrorY,
-            mytool.mirrorZ,
+            scene.mirrorX,
+            scene.mirrorY,
+            scene.mirrorZ,
         )
         
         target_obj = context.active_object    # makes the active object the "target"
@@ -112,6 +102,8 @@ class RotationalSymmetryOperator(bpy.types.Operator):
         empty_dims_list = [0, 0, 0]
 
         rot_origin_name = '' # holds the name of the object used as the origin for rotation, helps organize collections
+        rot_angle = (0, 0, 0) # holds the angle at which the objects will be symmetrical around
+
 
         if mytool.symm_obj == 'OP1':
             tool_objs = context.selected_objects
@@ -184,16 +176,16 @@ class MirrorObjectsPanel(bpy.types.Panel):
     bl_region_type = 'UI'
     
     def draw(self, context):
-        scene = context.scene
-        layout = self.layout
-        mytool = scene.my_tool
-
-        layout.label(text='Mirror Axes')
-        layout.prop(mytool, "mirror_axes", expand=True)
+        self.layout.label(text='Mirror Axes')
+        row = self.layout.row(align=True)
+        for (prop_name, _) in MyProperties.PROPS:
+            row.prop(context.scene, prop_name)
             
-        layout.operator(MirrorObjectsOperator.bl_idname, text=MirrorObjectsOperator.bl_label)
-        
-        layout.operator(RemoveMirrorMult.bl_idname, text=RemoveMirrorMult.bl_label)
+        row = self.layout.row(align=False) 
+        row.operator(MirrorObjectsOperator.bl_idname, text=MirrorObjectsOperator.bl_label)
+
+        row = self.layout.row(align=False) 
+        row.operator(RemoveMirrorMult.bl_idname, text=RemoveMirrorMult.bl_label)
 
 class RotateSymmPanel(bpy.types.Panel):
     bl_category = 'kreby'
@@ -208,7 +200,7 @@ class RotateSymmPanel(bpy.types.Panel):
         mytool = scene.my_tool # allows for reference of MyProperties
 
         layout.prop(mytool, "num_copies")
-        layout.prop(mytool, "symm_obj", expand=True)
+        layout.prop(mytool, "symm_obj")
 
         layout.operator(RotationalSymmetryOperator.bl_idname, text=RotationalSymmetryOperator.bl_label)
 
@@ -228,7 +220,13 @@ def register():
 
         bpy.types.Scene.my_tool = bpy.props.PointerProperty(type=MyProperties) # creates my_tool (the property group reference) in each class being registered
 
+    for (prop_name, prop_value) in MyProperties.PROPS:
+        setattr(bpy.types.Scene, prop_name, prop_value)
+
 def unregister():
+    for (prop_name, _) in MyProperties.PROPS:
+        delattr(bpy.types.Scene, prop_name)
+
     for klass in CLASSES:
         bpy.utils.unregister_class(klass)
 
