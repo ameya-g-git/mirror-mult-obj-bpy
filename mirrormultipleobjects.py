@@ -8,6 +8,9 @@ bl_info = {
 }
 
 import bpy
+from math import pi, radians
+
+PI = 3.14159
 
 class MyProperties(bpy.types.PropertyGroup):
     PROPS = [
@@ -16,6 +19,17 @@ class MyProperties(bpy.types.PropertyGroup):
         ('mirrorZ', bpy.props.BoolProperty(name='Z', default=False)),
     ]
 
+    rot_sym_axis : bpy.props.EnumProperty(
+        name="Rot. Sym. Axis",
+        description="Axis to rotate around",
+        default=0,
+        items= [
+            ('OP1', 'X', '', 0),
+            ('OP2', 'Y', '', 1),
+            ('OP3', 'Z', '', 2)
+        ]
+    )
+
     symm_obj_options = [
             ('OP1', '3D Cursor', '', 0),
             ('OP2', 'Active Obj. Origin', '', 1)
@@ -23,7 +37,7 @@ class MyProperties(bpy.types.PropertyGroup):
 
     num_copies : bpy.props.IntProperty(
         name="Num. of Copies", 
-        description="how many copies", 
+        description="Number of copies", 
         default=2, 
         min=2,
         max=360,
@@ -34,7 +48,7 @@ class MyProperties(bpy.types.PropertyGroup):
         name="Rotation Origin",
         description="what to rotate around",
         default=0,
-        items=symm_obj_options, # ~ MAKE FLAG VERSION ~
+        items=symm_obj_options
     )
 
 # ~~ OPERATORs
@@ -94,6 +108,7 @@ class RotationalSymmetryOperator(bpy.types.Operator):
         
         collec_pref = 'RotSymCollection'
         num_items = mytool.num_copies
+        rot_axis = '' # holds the name of the axis on which the rotational symmetry will be applied
         
         cursor_loc = scene.cursor.location
 
@@ -102,7 +117,7 @@ class RotationalSymmetryOperator(bpy.types.Operator):
         empty_dims_list = [0, 0, 0]
 
         rot_origin_name = '' # holds the name of the object used as the origin for rotation, helps organize collections
-        rot_angle = (0, 0, 0) # holds the angle at which the objects will be symmetrical around
+        rot_angle = 0 # holds the angle that the empty needs to be rotated around
 
 
         if mytool.symm_obj == 'OP1':
@@ -125,7 +140,6 @@ class RotationalSymmetryOperator(bpy.types.Operator):
             cursor_loc = scene.cursor.location # holds the past location of the cursor
             target_obj = context.active_object
             rot_origin_name = target_obj.name # sets origin name accordingly to target_obj name
-            # figure out how to get angle of object lol
             
             empty_dims = target_obj.dimensions # used to calculate the largest dimension so that the empty object used to mirror is easily visible
             empty_dims_list = [empty_dims.x, empty_dims.y, empty_dims.z]
@@ -135,27 +149,46 @@ class RotationalSymmetryOperator(bpy.types.Operator):
 
             scene.cursor.location = target_obj.location # moves 3d cursor to active object so that the empty can be placed accordingly
         
+        rot_angle_num = radians(360 / num_items)
+
+        if mytool.rot_sym_axis == 'OP1':
+            rot_angle = 'X'
+        elif mytool.rot_sym_axis == 'OP2':
+            rot_angle = 'Y'       
+        elif mytool.rot_sym_axis == 'OP3':
+            rot_angle = 'Z'
+
         bpy.ops.object.empty_add(type='PLAIN_AXES', location=scene.cursor.location, radius=empty_radius) # adds an object to be used for rotational symmetry
-        rotation_empty = bpy.context.selected_objects[0] # holds the empty as an object for future reference
+
+        bpy.ops.transform.rotate(value=rot_angle_num, orient_axis=rot_angle)
+                
+        rotation_empty = bpy.context.active_object
+
         rotation_empty.name = 'RotSymEmpty' # renames the empty
         bpy.ops.collection.objects_remove_all() # delinks empty from all existing collections, need to rework to nest collections
 
         new_collec_name = collec_pref + '.' + rot_origin_name
         bpy.data.collections.new(new_collec_name) # creates a new collection to hold all objects that will be rotationally symmetrized
         
-        bpy.data.collections[new_collec_name].objects.link(rotation_empty)
+        bpy.data.collections[-1].objects.link(rotation_empty)
 
-        scene.collection.children.link(bpy.data.collections[new_collec_name])
+        scene.collection.children.link(bpy.data.collections[-1])
 
+        for i in range(len(tool_objs)):
+            obj = tool_objs[i]
 
-        for obj in tool_objs:
+            bpy.context.view_layer.objects.active = obj
+            obj.select_set(True)
+
             bpy.ops.object.origin_set(type='ORIGIN_CURSOR')
             bpy.ops.object.transform_apply(rotation=True)
-            bpy.data.collections[new_collec_name].objects.link(obj)
+            bpy.data.collections[-1].objects.link(obj)
 
             obj.modifiers.new('RotSymmetry', type='ARRAY')
             
             rot_sym_modifier = obj.modifiers[len(obj.modifiers)-1]
+            rot_sym_modifier.use_relative_offset = False
+            rot_sym_modifier.use_object_offset = True
             rot_sym_modifier.offset_object = rotation_empty
             rot_sym_modifier.count = num_items
 
@@ -201,6 +234,9 @@ class RotateSymmPanel(bpy.types.Panel):
 
         layout.prop(mytool, "num_copies")
         layout.prop(mytool, "symm_obj")
+        
+        layout.label(text='Rot. Sym. Axis')
+        layout.prop(mytool, "rot_sym_axis", expand=True)
 
         layout.operator(RotationalSymmetryOperator.bl_idname, text=RotationalSymmetryOperator.bl_label)
 
