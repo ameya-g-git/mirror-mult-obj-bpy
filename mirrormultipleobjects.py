@@ -2,7 +2,7 @@ bl_info = {
     "name": "Mirror Multiple Objects",
     "blender": (2, 80, 0),
     "category": "Object",
-    "version": (1, 4, 1),
+    "version": (2, 1, 1),
     "author": "kreby",
     "description": "mirrors all selected objects over active object",
 }
@@ -60,9 +60,9 @@ class RemoveMirrorMult(bpy.types.Operator):
         selected = context.selected_objects
 
         for obj in selected:
-            mirrorMultMods = [mod for mod in obj.modifiers if mod.name[:10] == "MirrorMult"]
+            mirrorMultMods = [mod for mod in obj.modifiers if mod.name[:10] == "MirrorMult"] # creates list of all mirrormult modifiers
             if mirrorMultMods:
-                obj.modifiers.remove(mirrorMultMods[-1])
+                obj.modifiers.remove(mirrorMultMods[-1]) # deletes the last modifier, the most recent one
         
         return {'FINISHED'}
 
@@ -84,13 +84,27 @@ class MirrorObjectsOperator(bpy.types.Operator):
         target_obj = context.active_object    # makes the active object the "target"
         tool_objs = [o for o in context.selected_objects if o != target_obj]    # makes every other object applicable to the mirror
 
+        mult_collec_name = pref + target_obj.name
+
+        bpy.data.collections.new(mult_collec_name) # creates a new collection to hold all objects that will be rotationally symmetrized
+        
+        bpy.data.collections[-1].objects.link(target_obj)
+
+        scene.collection.children.link(bpy.data.collections[-1])
+
         for obj in tool_objs:
             obj.modifiers.new(pref, type='MIRROR')    # creates a mirror modifier with an appropriate name
             
-            #try obj.modif
+            obj.select_set(True)
+            bpy.data.collections[-1].objects.link(obj)
+
+            context.view_layer.objects.active = target_obj
+            target_obj.select_set(True)
+
             obj.modifiers[len(obj.modifiers)-1].mirror_object = target_obj  # sets the mirror object to the active object
             obj.modifiers[len(obj.modifiers)-1].use_axis = params  # sets appropriate mirror axes
-            
+
+            bpy.ops.object.parent_set(keep_transform=True, type='OBJECT')
             
         # the code to mirror multiple objects
         
@@ -107,9 +121,9 @@ class RotationalSymmetryOperator(bpy.types.Operator):
         
         collec_pref = 'RotSymCollection'
         num_items = mytool.num_copies
-        rot_axis = '' # holds the name of the axis on which the rotational symmetry will be applied
         
         cursor_loc = scene.cursor.location
+        target_obj = context.active_object
 
         obj_radius = 0
         obj_dims = 0
@@ -137,18 +151,19 @@ class RotationalSymmetryOperator(bpy.types.Operator):
 
         elif mytool.symm_obj == 'OP2':
             cursor_loc = scene.cursor.location # holds the past location of the cursor
-            target_obj = context.active_object
-            rot_origin_name = target_obj.name # sets origin name accordingly to target_obj name
+            rot_origin_name = context.active_object.name # sets origin name accordingly to target_obj name
+            target_obj = bpy.data.objects[rot_origin_name]
             
             obj_dims = target_obj.dimensions # used to calculate the largest dimension so that the empty object used to mirror is easily visible
             obj_dims_list = [obj_dims.x, obj_dims.y, obj_dims.z]
-            obj_radius = max(obj_dims_list) * 1.1
+            obj_radius = max(obj_dims_list) * 1.1 # makes the empty very small as it is unnecessary to select it
 
             tool_objs = [o for o in context.selected_objects if o != target_obj]
 
             scene.cursor.location = target_obj.location # moves 3d cursor to active object so that the empty can be placed accordingly
         
         rot_angle_num = radians((360 / num_items))
+        #bpy.data.curves.new(type="FONT", name="Font Curve").body = str(num_items)
 
         if mytool.rot_sym_axis == 'OP1':
             rot_angle = Euler((rot_angle_num, 0, 0), 'XYZ')
@@ -157,12 +172,9 @@ class RotationalSymmetryOperator(bpy.types.Operator):
         elif mytool.rot_sym_axis == 'OP3':
             rot_angle = Euler((0, 0, rot_angle_num), 'XYZ')
             
-        bpy.ops.object.empty_add(type='PLAIN_AXES', rotation=rot_angle, radius=obj_radius)
+        bpy.ops.object.empty_add(type='PLAIN_AXES', rotation=rot_angle, radius=obj_radius, location=scene.cursor.location)
 
-        rotation_obj = context.active_object
-        rotation_obj.display_type = 'WIRE'
-        rotation_obj.hide_render = True
-      
+        rotation_obj = bpy.data.objects[context.active_object.name]
 
         rotation_obj.name = 'RotSymObj' # renames the empty
         bpy.ops.collection.objects_remove_all() # delinks rotation_obj from all existing collections, need to rework to nest collections
@@ -175,11 +187,15 @@ class RotationalSymmetryOperator(bpy.types.Operator):
         scene.collection.children.link(bpy.data.collections[-1])
         
         bpy.ops.object.select_all(action='DESELECT')
+        rotation_obj.select_set(False)
 
         for obj in tool_objs:           
             obj.select_set(True)
             
-            obj_mat = obj.matrix_world.copy()
+            mirrorMods = [mod for mod in obj.modifiers if mod.name[:6] == "Mirror"] # collects all mirror modifiers from the objects, since the modifier itself is based on the origin of the object and will be ruined if the rot sym is applied
+
+            for mod in mirrorMods:
+                obj.modifiers.apply_modifier(mod)
 
             bpy.ops.object.origin_set(type='ORIGIN_CURSOR')
             bpy.ops.object.transform_apply(rotation=True)
@@ -199,6 +215,16 @@ class RotationalSymmetryOperator(bpy.types.Operator):
             bpy.ops.object.parent_set(type='OBJECT', keep_transform=True)
             
             bpy.ops.object.select_all(action='DESELECT')
+
+            if rot_origin_name:
+                rotation_obj.select_set(True)
+                context.view_layer.objects.active = target_obj
+                target_obj.select_set(True)
+                
+
+                bpy.ops.object.parent_set(type='OBJECT', keep_transform=True)
+
+            rot_origin_name = ''
 
         scene.cursor.location = cursor_loc # returns cursor to previous position :3
     
