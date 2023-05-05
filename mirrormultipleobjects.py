@@ -84,19 +84,10 @@ class MirrorObjectsOperator(bpy.types.Operator):
         target_obj = context.active_object    # makes the active object the "target"
         tool_objs = [o for o in context.selected_objects if o != target_obj]    # makes every other object applicable to the mirror
 
-        mult_collec_name = pref + target_obj.name
-
-        bpy.data.collections.new(mult_collec_name) # creates a new collection to hold all objects that will be rotationally symmetrized
-        
-        bpy.data.collections[-1].objects.link(target_obj)
-
-        scene.collection.children.link(bpy.data.collections[-1])
-
         for obj in tool_objs:
             obj.modifiers.new(pref, type='MIRROR')    # creates a mirror modifier with an appropriate name
             
             obj.select_set(True)
-            bpy.data.collections[-1].objects.link(obj)
 
             context.view_layer.objects.active = target_obj
             target_obj.select_set(True)
