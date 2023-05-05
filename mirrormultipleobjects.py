@@ -121,8 +121,7 @@ class RotationalSymmetryOperator(bpy.types.Operator):
         
         collec_pref = 'RotSymCollection'
         num_items = mytool.num_copies
-        
-        cursor_loc = scene.cursor.location
+
         target_obj = context.active_object
 
         obj_radius = 0
@@ -156,11 +155,11 @@ class RotationalSymmetryOperator(bpy.types.Operator):
             
             obj_dims = target_obj.dimensions # used to calculate the largest dimension so that the empty object used to mirror is easily visible
             obj_dims_list = [obj_dims.x, obj_dims.y, obj_dims.z]
-            obj_radius = max(obj_dims_list) * 1.1 # makes the empty very small as it is unnecessary to select it
+            obj_radius = max(obj_dims_list) * 1.1
 
             tool_objs = [o for o in context.selected_objects if o != target_obj]
 
-            scene.cursor.location = target_obj.location # moves 3d cursor to active object so that the empty can be placed accordingly
+            bpy.ops.view3d.snap_cursor_to_active() # moves 3d cursor to active object so that the empty can be placed accordingly
         
         rot_angle_num = radians((360 / num_items))
         #bpy.data.curves.new(type="FONT", name="Font Curve").body = str(num_items)
@@ -180,17 +179,28 @@ class RotationalSymmetryOperator(bpy.types.Operator):
         bpy.ops.collection.objects_remove_all() # delinks rotation_obj from all existing collections, need to rework to nest collections
 
         new_collec_name = collec_pref + '.' + rot_origin_name
-        bpy.data.collections.new(new_collec_name) # creates a new collection to hold all objects that will be rotationally symmetrized
         
-        bpy.data.collections[-1].objects.link(rotation_obj)
+        print(new_collec_name)
+        
+        for collec in bpy.data.collections:
+            if collec.name == new_collec_name:
+                new_collec_name += 'a'
+        
+        new_collec = bpy.data.collections.new(new_collec_name) # creates a new collection to hold all objects that will be rotationally symmetrized
+        
+        new_collec.objects.link(rotation_obj)
 
-        scene.collection.children.link(bpy.data.collections[-1])
+        scene.collection.children.link(new_collec)
         
         bpy.ops.object.select_all(action='DESELECT')
+        
         rotation_obj.select_set(False)
 
         for obj in tool_objs:           
+            context.view_layer.objects.active = obj
             obj.select_set(True)
+            
+            print(obj.name)
             
             mirrorMods = [mod for mod in obj.modifiers if mod.name[:6] == "Mirror"] # collects all mirror modifiers from the objects, since the modifier itself is based on the origin of the object and will be ruined if the rot sym is applied
 
@@ -198,7 +208,7 @@ class RotationalSymmetryOperator(bpy.types.Operator):
                 obj.modifiers.apply_modifier(mod)
 
             bpy.ops.object.origin_set(type='ORIGIN_CURSOR')
-            bpy.ops.object.transform_apply(rotation=True)
+            bpy.ops.object.transform_apply(rotation=True, location=False)
             bpy.data.collections[-1].objects.link(obj)
 
             obj.modifiers.new('RotSymmetry', type='ARRAY')
@@ -215,18 +225,17 @@ class RotationalSymmetryOperator(bpy.types.Operator):
             bpy.ops.object.parent_set(type='OBJECT', keep_transform=True)
             
             bpy.ops.object.select_all(action='DESELECT')
-
-            if rot_origin_name:
-                rotation_obj.select_set(True)
-                context.view_layer.objects.active = target_obj
+            
+            if rot_origin_name != 'Cursor':
                 target_obj.select_set(True)
+                context.view_layer.objects.active = rotation_obj
+                rotation_obj.select_set(True)
                 
-
                 bpy.ops.object.parent_set(type='OBJECT', keep_transform=True)
-
-            rot_origin_name = ''
-
-        scene.cursor.location = cursor_loc # returns cursor to previous position :3
+            
+            bpy.ops.object.select_all(action='DESELECT')
+    
+            #rot_origin_name = ''
     
         return {'FINISHED'}
 
