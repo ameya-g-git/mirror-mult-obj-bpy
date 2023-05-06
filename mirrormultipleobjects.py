@@ -202,7 +202,7 @@ class RotationalSymmetryOperator(bpy.types.Operator):
             bpy.ops.object.transform_apply(rotation=True, location=False)
             bpy.data.collections[-1].objects.link(obj)
 
-            obj.modifiers.new('RotSymmetry', type='ARRAY')
+            obj.modifiers.new('RotSymm', type='ARRAY')
             
             rot_sym_modifier = obj.modifiers[len(obj.modifiers)-1]
             rot_sym_modifier.use_relative_offset = False
