@@ -3,14 +3,18 @@ My first Blender addon, an addon that makes symmetry and mirroring among multipl
 
 *(btw this is my first proper project that i'm shipping, so I'm just having fun with the markdown on my README file lol)*
 
-# :notebook_with_decorative_cover: Description
+If you're a fan of this addon, it would be awesome for you to support me by purchasing it on Gumroad! There's no difference between the Gumroad version and this version, so there's no obligation to pay!
+
+🔗 https://kreby.gumroad.com/l/mirrormultblender
+
+# Description
 This addon contains **2** panels, one for mirroring multiple objects along 1 or more of the 3 orthogonal axes[^1], named ***MirrorMult***, and another one for rotational symmetry which is just referred to as ***RotSymm***, for shorthand. 
 
 I made this addon since I felt that symmetrical designs were just way too tedious to make procedurally within Blender. To do it, you had to add an individual *Mirror* modifier to each object, select its *Mirror Object*, and then select the axes over which it would be reflected. That's just... way too much work... especially for objects with a bunch of other modifiers, meaning you can't just use ***Copy Modifiers*** and call it a day[^2]. 
 
 So, I just spent a good couple hours of my time to make this addon!
 
-# :book: History
+# History
 Back a year or two ago, I made a very simple version of the addon that just consisted of the ***MirrorMult*** panel. I was just getting into programming and I followed step-by-step guides on how BPy[^3] works and some of the fundamentals like syntax and file organization. I've learnt a lot more about Blender at this point, and so I needed a better addon that could help more with these symmetrical, almost futuristic designs that I've been wanting to make. 
 
 In Blender, rotational symmetry doesn't actually exist. It's done through a sort of "hack" where you use the **Array** modifier and use a rotated object as its Object Offset. Doing this for so many objects, and having to manually rotate the central object a certain amount depending on how many copies you wanted around the origin was just annoying. So, I decided to update my old addon with a cooler UI and more organizational features, which you'll see in the later sections! 
@@ -21,7 +25,7 @@ As I hadn't touched the BPy API in so long, it took a lot of time to get readjus
 
 Anyway, enough about me, here's how the addon works!
 
-# :last_quarter_moon: MirrorMult
+# MirrorMult
 This panel allows you to reflect your selected objects over the active object, over whatever axes you want!
 
 ## Features:
@@ -38,7 +42,7 @@ Using this panel just goes as follows:
 
 https://user-images.githubusercontent.com/121361927/236517415-6182d157-2d91-46bc-a523-a3570947c7f5.mov
 
-# :low_brightness: RotSymm
+# RotSym
 This panel allows for easy rotational symmetry, by rotating selected objects around a certain origin point and around a certain axis! 
 
 ## Features:
