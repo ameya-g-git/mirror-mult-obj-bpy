@@ -38,7 +38,7 @@ Using this panel just goes as follows:
 
 https://user-images.githubusercontent.com/121361927/236517415-6182d157-2d91-46bc-a523-a3570947c7f5.mov
 
-# :low_brightness: RotSym
+# :low_brightness: RotSymm
 This panel allows for easy rotational symmetry, by rotating selected objects around a certain origin point and around a certain axis! 
 
 ## Features:
