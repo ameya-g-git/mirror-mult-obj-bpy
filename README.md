@@ -1,12 +1,6 @@
 # mirror-mult-obj-bpy
 My first Blender addon, an addon that makes symmetry and mirroring among multiple objects way less tedious!
 
-*(btw this is my first proper project that i'm shipping, so I'm just having fun with the markdown on my README file lol)*
-
-If you're a fan of this addon, it would be awesome for you to support me by purchasing it on Gumroad! There's no difference between the Gumroad version and this version, so there's no obligation to pay!
-
-🔗 https://kreby.gumroad.com/l/mirrormultblender
-
 # :notebook_with_decorative_cover: Description
 This addon contains **2** panels, one for mirroring multiple objects along 1 or more of the 3 orthogonal axes[^1], named ***MirrorMult***, and another one for rotational symmetry which is just referred to as ***RotSymm***, for shorthand. 
 
